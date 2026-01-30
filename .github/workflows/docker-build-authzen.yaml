@@ -1,10 +1,13 @@
-name: Build and Publish Docker (poc/authzen-1)
+name: Build and Publish Docker for branch
 
 on:
-  push:
-    branches:
-      - poc/authzen-1
-
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to run on"
+        required: true
+        default: main
+        
 permissions:
   contents: read
   packages: write
