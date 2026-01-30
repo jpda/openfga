@@ -1,12 +1,7 @@
-name: Build and Publish Docker for branch
+name: Build and Publish Docker for AuthZEN
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to run on"
-        required: true
-        default: main
         
 permissions:
   contents: read
@@ -45,8 +40,37 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  build-mac-arm64-binary:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: './go.mod'
+          cache-dependency-path: './go.sum'
+          check-latest: true
+
+      - name: Build Mac ARM64 binary
+        run: |
+          GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build \
+            -ldflags="-s -w" \
+            -o openfga-darwin-arm64 \
+            ./cmd/openfga
+
+      - name: Upload Mac ARM64 binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: openfga-darwin-arm64
+          path: openfga-darwin-arm64
+          retention-days: 30
